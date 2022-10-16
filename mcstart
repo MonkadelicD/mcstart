@@ -1,0 +1,76 @@
+#!/bin/bash 
+
+# Enable debugging
+#set -x
+#echo $PWD
+
+# Declare variables
+
+# Set variable for each java version needed
+java8=/usr/lib/jvm/java-8-openjdk-amd64/jre/bin/java
+java11=/usr/lib/jvm/java-11-openjdk-amd64/bin/java
+java16=/usr/lib/jvm/java-16-openjdk-amd64/bin/java
+
+# Get Minecraft server software and version from first and second CLI options 
+cd $(echo $HOME)
+#echo $PWD
+mcSrvrType=$1 
+
+# Check and set input variables if valid selections
+if [[ -e $mcSrvrType/$2 && -d $mcSrvrType/$2 ]];
+then
+	echo "Found $mcSrvrType-$2"
+	srvrDir=$HOME/$mcSrvrType/$2
+	linkTarget=$(readlink -f $1/$2)
+	buildVersion=$(basename $linkTarget)
+	gameDir=$2
+elif ! $1;
+then
+	echo "MC server type not valid at first option"
+	help
+elif ! $2;
+then
+	echo "MC server version not valid at second option"
+	help
+fi
+
+# Get MC server minor version for java compatibilty
+IFS=. read major minor point <<< $buildVersion
+if [[ $minor < 17 ]];
+then
+	javabin=$java8
+else
+	javabin=$java16
+fi
+
+# Get configured port for MC server and echo to console
+srvrPort=$(grep "server-port" $srvrDir/server.properties | awk -F = '{ print $2 }')
+
+# Help/Usage
+
+help()
+{
+	# Display help/usage
+	echo "This script requires at least a server type to be specified."
+	echo "A build version can also be specified as the second option."
+	echo
+	echo "Syntax: startmc.sh [servertype] [version]"
+	echo
+}
+
+# Main program
+
+# Change to directory selected version is located in. 
+cd $srvrDir
+#echo $PWD
+
+# Java command to start MC server in a screen session. 
+if [[ $mcSrvrType == forge ]];
+then
+	echo "Starting $mcSrvrType-$buildVersion on Port: $srvrPort"
+	screen -d -m -S "MCServer_$mcSrvrType-$buildVersion" $srvrDir/run.sh
+	
+else
+	echo "Starting $mcSrvrType-$buildVersion on Port: $srvrPort"
+	screen -d -m -S "MCServer_$mcSrvrType-$buildVersion" $javabin -Xms1G -Xmx4G -jar $mcSrvrType-$buildVersion.jar nogui
+fi
