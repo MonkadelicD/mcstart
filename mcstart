@@ -12,42 +12,6 @@ java11=/usr/lib/jvm/java-11-openjdk-amd64/bin/java
 java16=/usr/lib/jvm/java-16-openjdk-amd64/bin/java
 java17=/usr/lib/jvm/java-17-openjdk-amd64/bin/java
 
-# Get Minecraft server software and version from first and second CLI options 
-cd $(echo $HOME)
-#echo $PWD
-mcSrvrType=$1 
-
-# Check and set input variables if valid selections
-if [[ -e $mcSrvrType/$2 && -d $mcSrvrType/$2 ]];
-then
-	echo "Found $mcSrvrType-$2"
-	srvrDir=$HOME/$mcSrvrType/$2
-	linkTarget=$(readlink -f $1/$2)
-	buildVersion=$(basename $linkTarget)
-	gameDir=$2
-elif ! $1;
-then
-	echo "MC server type not valid at first option"
-	help
-elif ! $2;
-then
-	echo "MC server version not valid at second option"
-	help
-fi
-
-# Get MC server minor version for java compatibilty
-IFS=. read major minor point <<< $buildVersion
-if [[ $minor == 17 ]]; then
-	javabin=$java16
-elif [[ $minor > 17 ]]; then
-	javabin=$java17
-else
-	javabin=$java8
-fi
-
-# Get configured port for MC server and echo to console
-srvrPort=$(grep "server-port" $srvrDir/server.properties | awk -F = '{ print $2 }')
-
 # Help/Usage
 
 help()
@@ -60,23 +24,71 @@ help()
 	echo
 }
 
+# Get Minecraft server software and version from first and second CLI options 
+cd $(echo "$HOME")
+#echo $PWD
+
+if [ -z $1 ];
+then
+	echo "No options set..."
+	help
+	exit 1
+else
+	if [[ -z $2 ]];
+	then
+		mcVersion="current"
+	else
+		mcVersion="$2"
+	fi
+	mcSrvrType="$1" 
+	mcSrvrDir="$mcSrvrType"/"$mcVersion"
+fi
+
+
+# Check and set input variables if valid selections
+if [[ -e $mcSrvrDir && -d $mcSrvrDir ]];
+then
+	echo "Found $mcSrvrType/$mcVersion"
+	srvrDir="$HOME"/"$mcSrvrDir"
+	linkTarget=$(readlink -f "$mcSrvrDir")
+	buildVersion=$(basename "$linkTarget")
+else
+	echo "MC server type or version not valid."
+	help
+fi
+
+# Get MC server minor version for java compatibilty
+IFS=. read major minor point <<< "$buildVersion"
+if [[ $minor == 17 ]]; then
+	javabin="$java16"
+elif [[ $minor > 17 ]]; then
+	javabin="$java17"
+else
+	javabin="$java8"
+fi
+
+# Get configured port for MC server and echo to console
+srvrPort=$(grep "server-port" "$srvrDir"/server.properties | awk -F = '{ print $2 }')
+
 # Main program
 
 # Change to directory selected version is located in. 
-cd $srvrDir
+cd "$srvrDir"
 #echo $PWD
 
 # Java command to start MC server in a screen session. 
 if [[ $mcSrvrType == forge ]];
 then
 	echo "Starting $mcSrvrType-$buildVersion on Port: $srvrPort"
-	screen -d -m -S "MCServer_$mcSrvrType-$buildVersion" $srvrDir/run.sh
+	screen -d -m -S "MCServer_$mcSrvrType-$buildVersion" /run.sh
 	
 elif [[ $mcSrvrType == fabric ]];
 then
-	echo "Starting $mcSrvrType-$buildVersion on Port: $SrvrPort"
-	screen -d -m -S "MCServer_$mcSrvrType-$buildVersion" $srvDir/$mcSrvrType-$buildVersion-server-launch.jar
+	echo "Starting $mcSrvrType-$buildVersion on Port: $srvrPort"
+	screen -d -m -S "MCServer_$mcSrvrType-$buildVersion" "$javabin" -jar "$mcSrvrType"-"$buildVersion"-server-launch.jar
 else
 	echo "Starting $mcSrvrType-$buildVersion on Port: $srvrPort"
-	screen -d -m -S "MCServer_$mcSrvrType-$buildVersion" $javabin -Xms1G -Xmx4G -jar $mcSrvrType-$buildVersion.jar nogui
+	screen -d -m -S "MCServer_$mcSrvrType-$buildVersion" "$javabin" -Xms1G -Xmx4G -jar "$mcSrvrType"-"$buildVersion".jar nogui
 fi
+
+#set +x
