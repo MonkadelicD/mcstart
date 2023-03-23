@@ -72,6 +72,10 @@ then
 	echo "Starting $mcSrvrType-$buildVersion on Port: $srvrPort"
 	screen -d -m -S "MCServer_$mcSrvrType-$buildVersion" $srvrDir/run.sh
 	
+elif [[ $mcSrvrType == fabric ]];
+then
+	echo "Starting $mcSrvrType-$buildVersion on Port: $SrvrPort"
+	screen -d -m -S "MCServer_$mcSrvrType-$buildVersion" $srvDir/$mcSrvrType-$buildVersion-server-launch.jar
 else
 	echo "Starting $mcSrvrType-$buildVersion on Port: $srvrPort"
 	screen -d -m -S "MCServer_$mcSrvrType-$buildVersion" $javabin -Xms1G -Xmx4G -jar $mcSrvrType-$buildVersion.jar nogui
