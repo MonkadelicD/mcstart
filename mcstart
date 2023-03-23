@@ -38,7 +38,7 @@ fi
 # Get MC server minor version for java compatibilty
 IFS=. read major minor point <<< $buildVersion
 if [[ $minor == 17 ]]; then
-        javabin=$java16
+	javabin=$java16
 elif [[ $minor > 17 ]]; then
 	javabin=$java17
 else
