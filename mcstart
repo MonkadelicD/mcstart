@@ -13,7 +13,7 @@ if [ -e /etc/os-release ]; then
 fi
 
 # Set variable for each java version needed
-if [ $dist = arch ]; then
+if [ "$dist" = arch ]; then
 	java8=/usr/lib/jvm/java-8-openjdk/jre/bin/java
 	#java11=/usr/lib/jvm/java-11-openjdk/bin/java
 	#java16=/usr/lib/jvm/java-16-openjdk/bin/java
