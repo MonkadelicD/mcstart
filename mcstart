@@ -1,7 +1,6 @@
 #!/bin/sh 
 
 # Enable debugging
-#set -x
 #echo $PWD
 
 # Declare variables
@@ -103,4 +102,3 @@ else
 	screen -d -m -S "MCServer_$mcSrvrType-$buildVersion" "$javabin" -Xms1G -Xmx4G -jar "$mcSrvrType"-"$buildVersion".jar nogui
 fi
 
-#set +x
