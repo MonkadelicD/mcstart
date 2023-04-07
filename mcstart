@@ -19,18 +19,18 @@ fi
 # Set variable for each java version needed
 if [ "$dist" = "arch" ]; then
 	java8=/usr/lib/jvm/java-8-openjdk/jre/bin/java
-#	echo "java8 = $java8"
+	#echo "java8 = $java8"
 	#java11=/usr/lib/jvm/java-11-openjdk/bin/java
 	#java16=/usr/lib/jvm/java-16-openjdk/bin/java
 	java17=/usr/lib/jvm/java-17-openjdk/bin/java
-#	echo "java17 = $java17"
+	#echo "java17 = $java17"
 else
 	java8=/usr/lib/jvm/java-8-openjdk-amd64/jre/bin/java
-#	echo "java8 = $java8"
+	#echo "java8 = $java8"
 	#java11=/usr/lib/jvm/java-11-openjdk-amd64/bin/java
 	#java16=/usr/lib/jvm/java-16-openjdk-amd64/bin/java
 	java17=/usr/lib/jvm/java-17-openjdk-amd64/bin/java
-#	echo "java17 = $java17"
+	#echo "java17 = $java17"
 fi
 
 # Help/Usage
@@ -85,17 +85,19 @@ fi
 # Get MC server minor version for java compatibilty
 #IFS=. read major minor point <<< "$buildVersion"
 IFS=.
-set -- "$buildVersion"
-#major=$1
+set -- $buildVersion
+major="$1"
+#echo "major = $major"
 minor="$2"
-#point=$3
-if [ "$minor" -lt 18 ]; then
+#echo "minor = $minor"
+point=$3
+#echo "point = $point"
+if [ "$minor" -lt 17 ]; then
 	javabin="$java8"
 else
 	javabin="$java17"
 fi
 
-#echo "minor = $minor"
 #echo "javabin = $javabin"
 
 # Get configured port for MC server and echo to console
