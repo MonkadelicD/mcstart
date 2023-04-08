@@ -10,8 +10,8 @@ Packages: Minecraft server application, screen, java (at least version
 8 and 17 according to my testing)
 
 # Directory Structure
-place mcstart script in whatever directory you prefer that is included in
-your $PATH.
+place mcstart script in whatever directory you prefer that is included
+in your $PATH.
 mcstart expects each minecraft server jar to be located in $HOME in a 
 directory named the same as the server software name, ie forge, paper,
 spigot, vanilla, pixelmon, fabric etc.
