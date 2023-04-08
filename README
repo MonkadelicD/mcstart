@@ -18,6 +18,11 @@ spigot, vanilla, pixelmon, fabric etc.
 Within the server directory there should be a directory for each version
 of Minecraft, ie 1.12.2, 1.17.1, 1.19.2, 1.19.3, etc.
 
+For Forge server the script will always use the run.sh script.
+
+For Spigot, Paper, Fabric, and Vanilla the server jar should be named
+by the server type and version like spigot-1.17.1.jar
+
 The directory structure should resemble the following tree:
 
 forge
