@@ -1,0 +1,58 @@
+## README - mcstart
+
+# Overview
+mcstart is a simple shell script used to start minecraft servers.
+It supports a specific directory structure but works with a variety of
+Minecraft server jars.
+
+# Requirements
+Packages: Minecraft server application, screen, java (at least version
+8 and 17 according to my testing)
+
+# Directory Structure
+place mcstart script in whatever directory you prefer that is included in
+your $PATH.
+mcstart expects each minecraft server jar to be located in $HOME in a 
+directory named the same as the server software name, ie forge, paper,
+spigot, vanilla, pixelmon, fabric etc.
+Within the server directory there should be a directory for each version
+of Minecraft, ie 1.12.2, 1.17.1, 1.19.2, 1.19.3, etc.
+
+For Forge server the script will always use the run.sh script.
+
+For Spigot, Paper, Fabric, and Vanilla the server jar should be named
+by the server type and version like spigot-1.17.1.jar
+
+The directory structure should resemble the following tree:
+
+forge
+├── 1.17.1
+│   ├── forge-1.17.1-37.0.95-installer.jar
+│   └── run.sh
+├── 1.19.2
+│   ├── forge-1.19.2-43.2.0-installer.jar
+│   └── run.sh
+├── 1.19.3
+│   ├── forge-1.19.3-44.1.0-installer.jar
+│   └── run.sh
+└── current -> 1.19.3
+
+spigot
+├── 1.17.1
+│   └── spigot-1.17.1.jar
+├── 1.19.3
+│   └── spigot-1.19.3.jar
+└── current -> 1.19.3
+
+For Forge servers, run the java installer from within the directory
+corresponding to the Minecraft version.
+
+Once the server is running use screen -ls to list running screen
+sessions. Then use "screen -r <name-of-screen-session>" to connect to
+the server console.
+
+To start your server use the following syntax:
+# mcstart <server-type> <version>
+
+Example
+# mcstart forge 1.19.3
