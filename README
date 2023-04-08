@@ -47,6 +47,10 @@ spigot
 For Forge servers, run the java installer from within the directory
 corresponding to the Minecraft version.
 
+Once the server is running use screen -ls to list running screen
+sessions. Then use "screen -r <name-of-screen-session>" to connect to
+the server console.
+
 To start your server use the following syntax:
 # mcstart <server-type> <version>
 
