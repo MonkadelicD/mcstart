@@ -41,7 +41,7 @@ help()
 	echo "This script requires at least a server type to be specified."
 	echo "A build version can also be specified as the second option."
 	echo
-	echo "Syntax: startmc.sh [servertype] [version]"
+	echo "Syntax: mcstart [servertype] [version]"
 	echo
 }
 
