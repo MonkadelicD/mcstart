@@ -95,7 +95,7 @@ major="$1"
 #echo "major = $major"
 minor="$2"
 #echo "minor = $minor"
-point=$3
+point="$3"
 #echo "point = $point"
 if [ "$minor" -lt 17 ]; then
 	javabin="$java8"
