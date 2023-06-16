@@ -9,8 +9,8 @@
 
 # get distro from /etc/os-release
 if [ -e /etc/os-release ]; then
-	. /etc/os-release
-	dist=$ID
+  . /etc/os-release
+  dist=$ID
 fi
 
 #echo "dist = $dist"
@@ -18,11 +18,11 @@ fi
 # Set variable for each java version needed.
 # Arch and Ubuntu have different paths.
 if [ "$dist" = "arch" ]; then
-	java8=/usr/lib/jvm/java-8-openjdk/jre/bin/java
-	java17=/usr/lib/jvm/java-17-openjdk/bin/java
-else	# assuming Ubuntu
-	java8=/usr/lib/jvm/java-8-openjdk-amd64/jre/bin/java
-	java17=/usr/lib/jvm/java-17-openjdk-amd64/bin/java
+  java8=/usr/lib/jvm/java-8-openjdk/jre/bin/java
+  java17=/usr/lib/jvm/java-17-openjdk/bin/java
+else  # assuming Ubuntu
+  java8=/usr/lib/jvm/java-8-openjdk-amd64/jre/bin/java
+  java17=/usr/lib/jvm/java-17-openjdk-amd64/bin/java
 fi
 
 #echo "java8 = $java8"
@@ -35,13 +35,13 @@ fi
 # Help/Usage
 help()
 {
-	# Display help/usage
-	echo "This script requires at least a server type to be specified."
-	echo "A build version can also be specified as the second option."
-	echo "'current' is default for the version."
-	echo
-	echo "Syntax: mcstart [servertype] [version]"
-	echo
+  # Display help/usage
+  echo "This script requires at least a server type to be specified."
+  echo "A build version can also be specified as the second option."
+  echo "'current' is default for the version."
+  echo
+  echo "Syntax: mcstart [servertype] [version]"
+  echo
 }
 
 ## End Define Functions
@@ -54,18 +54,18 @@ cd "$HOME" || echo "I can't change to your home directory"
 #echo "HOME = $HOME"
 
 # Check command options entered when the script was called
-if [ -z "$1" ]; then			# if no options were entered
-	echo "No options set..."
-	help				# display help message
-	exit 1				# and exit script
+if [ -z "$1" ]; then      # if no options were entered
+  echo "No options set..."
+  help        # display help message
+  exit 1        # and exit script
 else
-	if [ -z "$2" ]; then		# if only one option was set
-		mcVersion="current"	# use current as default version
-	else
-		mcVersion="$2"
-	fi
-	mcSrvrType="$1" 
-	mcSrvrDir="$mcSrvrType"/"$mcVersion"
+  if [ -z "$2" ]; then    # if only one option was set
+    mcVersion="current" # use current as default version
+  else
+    mcVersion="$2"
+  fi
+  mcSrvrType="$1" 
+  mcSrvrDir="$mcSrvrType"/"$mcVersion"
 fi
 
 #echo "mcSrvrType = $mcSrvrType"
@@ -73,19 +73,20 @@ fi
 
 # Validate options for server and version
 if [ -e "$mcSrvrDir" ] && [ -d "$mcSrvrDir" ]; then
-	echo "Found $mcSrvrType/$mcVersion"
-	srvrDir="$HOME"/"$mcSrvrDir"		# use absolute path
-	linkTarget=$(readlink -f "$mcSrvrDir")	# get name of link target
-	buildVersion=$(basename "$linkTarget")	# use version directory as build
-	if cd "$srvrDir" ; then
-		echo "Moved to $srvrDir"
-	else
-		echo "Failed to change to MC server directory"
-		exit 1
+  echo "Found $mcSrvrType/$mcVersion"
+  srvrDir="$HOME"/"$mcSrvrDir"    # use absolute path
+  linkTarget=$(readlink -f "$mcSrvrDir")  # get name of link target
+  buildVersion=$(basename "$linkTarget")  # use version directory as build
+  if cd "$srvrDir" ; then
+    echo "Moved to $srvrDir"
+  else
+    echo "Failed to change to MC server directory"
+    exit 1
+  fi
 else
-	echo "MC server type or version not valid."
-	help
-	exit 1
+  echo "MC server type or version not valid."
+  help
+  exit 1
 fi
 
 # Get MC server minor version for java compatibilty
@@ -98,9 +99,9 @@ minor="$2"
 point="$3"
 #echo "point = $point"
 if [ "$minor" -lt 17 ]; then
-	javabin="$java8"
+  javabin="$java8"
 else
-	javabin="$java17"
+  javabin="$java17"
 fi
 
 #echo "javabin = $javabin"
@@ -114,14 +115,14 @@ srvrPort=$(grep "server-port" "$srvrDir"/server.properties | awk -F = '{ print $
 
 # Java command to start MC server in a screen session. 
 if [ "$mcSrvrType" = forge ]; then
-	echo "Starting $mcSrvrType-$buildVersion on Port: $srvrPort"
-	screen -d -m -S "MCServer_$mcSrvrType-$buildVersion" ./run.sh
-	
+  echo "Starting $mcSrvrType-$buildVersion on Port: $srvrPort"
+  screen -d -m -S "MCServer_$mcSrvrType-$buildVersion" ./run.sh
+  
 elif [ "$mcSrvrType" = fabric ]; then
-	echo "Starting $mcSrvrType-$buildVersion on Port: $srvrPort"
-	screen -d -m -S "MCServer_$mcSrvrType-$buildVersion" "$javabin" -jar "$mcSrvrType"-"$buildVersion"-server-launch.jar
+  echo "Starting $mcSrvrType-$buildVersion on Port: $srvrPort"
+  screen -d -m -S "MCServer_$mcSrvrType-$buildVersion" "$javabin" -jar "$mcSrvrType"-"$buildVersion"-server-launch.jar
 else
-	echo "Starting $mcSrvrType-$buildVersion on Port: $srvrPort"
-	screen -d -m -S "MCServer_$mcSrvrType-$buildVersion" "$javabin" -Xms1G -Xmx4G -jar "$mcSrvrType"-"$buildVersion".jar nogui
+  echo "Starting $mcSrvrType-$buildVersion on Port: $srvrPort"
+  screen -d -m -S "MCServer_$mcSrvrType-$buildVersion" "$javabin" -Xms1G -Xmx4G -jar "$mcSrvrType"-"$buildVersion".jar nogui
 fi
 
