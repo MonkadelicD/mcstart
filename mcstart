@@ -14,7 +14,7 @@ if [ -e /etc/os-release ]; then
 fi
 
 # get CPu architecture for java in Ubuntu
-if [ $(arch) = aarch64 ]; then
+if [ "$(arch)" = aarch64 ]; then
   arch=arm64
 else
   arch=amd64
