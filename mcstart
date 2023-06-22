@@ -13,6 +13,14 @@ if [ -e /etc/os-release ]; then
   dist=$ID
 fi
 
+# get CPu architecture for java in Ubuntu
+sysArch=$(arch)
+if $sysArch = aarch64; then
+  arch=arm64
+else
+  arch=amd64
+fi
+
 #echo "dist = $dist"
 
 # Set variable for each java version needed.
@@ -21,8 +29,8 @@ if [ "$dist" = "arch" ]; then
   java8=/usr/lib/jvm/java-8-openjdk/jre/bin/java
   java17=/usr/lib/jvm/java-17-openjdk/bin/java
 else  # assuming Ubuntu
-  java8=/usr/lib/jvm/java-8-openjdk-amd64/jre/bin/java
-  java17=/usr/lib/jvm/java-17-openjdk-amd64/bin/java
+  java8=/usr/lib/jvm/java-8-openjdk-$arch/jre/bin/java
+  java17=/usr/lib/jvm/java-17-openjdk-$arch/bin/java
 fi
 
 #echo "java8 = $java8"
@@ -120,7 +128,7 @@ if [ "$mcSrvrType" = forge ]; then
   
 elif [ "$mcSrvrType" = fabric ]; then
   echo "Starting $mcSrvrType-$buildVersion on Port: $srvrPort"
-  screen -d -m -S "MCServer_$mcSrvrType-$buildVersion" "$javabin" -jar "$mcSrvrType"-"$buildVersion"-server-launch.jar
+  screen -d -m -S "MCServer_$mcSrvrType-$buildVersion" "$javabin" -jar "$mcSrvrType"-"$buildVersion"-server-launch.jar nogui
 else
   echo "Starting $mcSrvrType-$buildVersion on Port: $srvrPort"
   screen -d -m -S "MCServer_$mcSrvrType-$buildVersion" "$javabin" -Xms1G -Xmx4G -jar "$mcSrvrType"-"$buildVersion".jar nogui
