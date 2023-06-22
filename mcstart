@@ -15,7 +15,7 @@ fi
 
 # get CPu architecture for java in Ubuntu
 sysArch=$(arch)
-if $sysArch = aarch64; then
+if [ $sysArch = aarch64 ]; then
   arch=arm64
 else
   arch=amd64
