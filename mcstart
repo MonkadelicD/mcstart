@@ -1,135 +1,104 @@
-#!/bin/sh 
+#!/bin/bash 
 
+# Enable debugging
+#set -x
 #echo $PWD
 
-#echo "option 1: $1"
-#echo "option 2: $2"
+# Declare variables
 
-## Begin Declare Variables
-
-# get distro from /etc/os-release
+# Get OS info
+# Get OS info to determine package manager
 if [ -e /etc/os-release ]; then
-  . /etc/os-release
-  dist=$ID
+  source /etc/os-release;
 fi
-
-# get CPu architecture for java in Ubuntu
-if [ "$(arch)" = aarch64 ]; then
-  arch=arm64
+if [[ "$ID" == "ubuntu" ]] || [[ "$ID" == "debian" ]] || [[ "$ID" == "linuxmint" ]]; then
+  pkg_mngr="apt"
+elif [[ "$ID" == "fedora" ]] || [[ "$ID" == "rhel" ]] || [[ "$ID" == "rocky" ]]; then
+  pkg_mngr="dnf"
 else
-  arch=amd64
-fi
-
-#echo "dist = $dist"
-
-# Set variable for each java version needed.
-# Arch and Ubuntu have different paths.
-if [ "$dist" = "arch" ]; then
-  java8=/usr/lib/jvm/java-8-openjdk/jre/bin/java
-  java17=/usr/lib/jvm/java-17-openjdk/bin/java
-else  # assuming Ubuntu
-  java8=/usr/lib/jvm/java-8-openjdk-$arch/jre/bin/java
-  java17=/usr/lib/jvm/java-17-openjdk-$arch/bin/java
-fi
-
-#echo "java8 = $java8"
-#echo "java17 = $java17"
-
-## End Declare Variables
-
-## Begin Define Functions
-
-# Help/Usage
-help()
-{
-  # Display help/usage
-  echo "This script requires at least a server type to be specified."
-  echo "A build version can also be specified as the second option."
-  echo "'current' is default for the version."
-  echo
-  echo "Syntax: mcstart [servertype] [version]"
-  echo
-}
-
-## End Define Functions
-
-## Begin Script
-
-# Move to $HOME so we know where we are
-cd "$HOME" || echo "I can't change to your home directory"
-
-#echo "HOME = $HOME"
-
-# Check command options entered when the script was called
-if [ -z "$1" ]; then      # if no options were entered
-  echo "No options set..."
-  help        # display help message
-  exit 1        # and exit script
-else
-  if [ -z "$2" ]; then    # if only one option was set
-    mcVersion="current" # use current as default version
-  else
-    mcVersion="$2"
-  fi
-  mcSrvrType="$1" 
-  mcSrvrDir="$mcSrvrType"/"$mcVersion"
-fi
-
-#echo "mcSrvrType = $mcSrvrType"
-#echo "mcSrvrDir = $mcSrvrDir"
-
-# Validate options for server and version
-if [ -e "$mcSrvrDir" ] && [ -d "$mcSrvrDir" ]; then
-  echo "Found $mcSrvrType/$mcVersion"
-  srvrDir="$HOME"/"$mcSrvrDir"    # use absolute path
-  linkTarget=$(readlink -f "$mcSrvrDir")  # get name of link target
-  buildVersion=$(basename "$linkTarget")  # use version directory as build
-  if cd "$srvrDir" ; then
-    echo "Moved to $srvrDir"
-  else
-    echo "Failed to change to MC server directory"
-    exit 1
-  fi
-else
-  echo "MC server type or version not valid."
-  help
+  echo "Untested OS. Please verify and improve this script."
   exit 1
 fi
 
-# Get MC server minor version for java compatibilty
-IFS=.
-set -- $buildVersion
-major="$1"
-#echo "major = $major"
-minor="$2"
-#echo "minor = $minor"
-point="$3"
-#echo "point = $point"
-if [ "$minor" -lt 17 ]; then
-  javabin="$java8"
-else
-  javabin="$java17"
+# Set variable for each java version needed
+java8=/usr/lib/jvm/java-8-openjdk-amd64/jre/bin/java
+java11=/usr/lib/jvm/java-11-openjdk-amd64/bin/java
+java16=/usr/lib/jvm/java-16-openjdk-amd64/bin/java
+
+# Get Minecraft server software and version from first and second CLI options 
+cd $(echo $HOME)
+#echo $PWD
+mcSrvrType=$1 
+
+# Check and set input variables if valid selections
+if [[ -e $mcSrvrType/$2 && -d $mcSrvrType/$2 ]];
+then
+	echo "Found $mcSrvrType-$2"
+	srvrDir=$HOME/$mcSrvrType/$2
+	linkTarget=$(readlink -f $1/$2)
+	buildVersion=$(basename $linkTarget)
+	gameDir=$2
+elif ! $1;
+then
+	echo "MC server type not valid at first option"
+	help
+elif ! $2;
+then
+	echo "MC server version not valid at second option"
+	help
 fi
 
-#echo "javabin = $javabin"
+# Get MC server minor version for java compatibilty
+IFS=. read major minor point <<< $buildVersion
+if [[ $minor < 17 ]];
+then
+	javabin=$java8
+else
+	javabin=$java16
+fi
 
 # Get configured port for MC server and echo to console
-srvrPort=$(grep "server-port" "$srvrDir"/server.properties | awk -F = '{ print $2 }')
+srvrPort=$(grep "server-port" $srvrDir/server.properties | awk -F = '{ print $2 }')
 
-#echo "srvrPort = $srvrPort"
+# Help/Usage
 
-## Main program
+help()
+{
+	# Display help/usage
+	echo "This script requires at least a server type to be specified."
+	echo "A build version can also be specified as the second option."
+	echo
+	echo "Syntax: startmc.sh [servertype] [version]"
+	echo
+}
 
-# Java command to start MC server in a screen session. 
-if [ "$mcSrvrType" = forge ]; then
-  echo "Starting $mcSrvrType-$buildVersion on Port: $srvrPort"
-  screen -d -m -S "MCServer_$mcSrvrType-$buildVersion" ./run.sh
-  
-elif [ "$mcSrvrType" = fabric ]; then
-  echo "Starting $mcSrvrType-$buildVersion on Port: $srvrPort"
-  screen -d -m -S "MCServer_$mcSrvrType-$buildVersion" "$javabin" -jar "$mcSrvrType"-"$buildVersion"-server-launch.jar nogui
-else
-  echo "Starting $mcSrvrType-$buildVersion on Port: $srvrPort"
-  screen -d -m -S "MCServer_$mcSrvrType-$buildVersion" "$javabin" -Xms1G -Xmx4G -jar "$mcSrvrType"-"$buildVersion".jar nogui
+# Main program
+
+# Ensure tmux is installed
+if [[ ! -x /usr/bin/tmux ]]; then
+  # install wtih apt or dnf
+  if [ "$pkg_mngr" == apt ]; then
+    run_apt tmux 
+  elif [ "$pkg_mngr" == dnf ]; then
+    run_dnf tmux
+  fi
 fi
 
+# Change to directory selected version is located in. 
+cd $srvrDir
+#echo $PWD
+
+# Java command to start MC server in a screen session. 
+if [[ $mcSrvrType == forge ]];
+then
+	echo "Starting $mcSrvrType-$buildVersion on Port: $srvrPort"
+	# screen -d -m -S "MCServer_$mcSrvrType-$buildVersion" $srvrDir/run.sh
+  # Using tmux now. Starting with Rocky Linux 8 screen was dropped
+  tmux new-session -d -s "MCServer_$mcSrvrType-$buildVersion" $srvrDir/run.sh
+	
+else
+	echo "Starting $mcSrvrType-$buildVersion on Port: $srvrPort"
+	# screen -d -m -S "MCServer_$mcSrvrType-$buildVersion" $javabin -Xms1G -Xmx4G -jar $mcSrvrType-$buildVersion.jar nogui
+  # Using tmux now. Starting with Rocky Linux 8 screen was dropped
+  tmux new-session -d -s "MCServer_$mcSrvrType-$buildVersion" $javabin -Xms1G -Xmx4G -jar $mcSrvrType-$buildVersion.jar nogui
+fi
