@@ -94,11 +94,11 @@ then
 	echo "Starting $mcSrvrType-$buildVersion on Port: $srvrPort"
 	# screen -d -m -S "MCServer_$mcSrvrType-$buildVersion" $srvrDir/run.sh
   # Using tmux now. Starting with Rocky Linux 8 screen was dropped
-  tmux new-session -d -s "MCServer_$mcSrvrType-$buildVersion" $srvrDir/run.sh
+  tmux new-session -d -s "MCServer_${mcSrvrType}" -n "MCServer_${mcSrvrType}-${buildVersion}" "$srvrDir"/run.sh
 	
 else
 	echo "Starting $mcSrvrType-$buildVersion on Port: $srvrPort"
 	# screen -d -m -S "MCServer_$mcSrvrType-$buildVersion" $javabin -Xms1G -Xmx4G -jar $mcSrvrType-$buildVersion.jar nogui
   # Using tmux now. Starting with Rocky Linux 8 screen was dropped
-  tmux new-session -d -s "MCServer_$mcSrvrType-$buildVersion" $javabin -Xms1G -Xmx4G -jar $mcSrvrType-$buildVersion.jar nogui
+  tmux new-session -d -s "MCServer_${mcSrvrType}" -n "MCServer_${mcSrvrType}-${buildVersion}" "$javabin" -Xms1G -Xmx4G -jar "${mcSrvrType}"-"${buildVersion}".jar nogui
 fi
