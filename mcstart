@@ -23,7 +23,7 @@ fi
 # Set variable for each java version needed
 java8=/usr/lib/jvm/java-8-openjdk-amd64/jre/bin/java
 java11=/usr/lib/jvm/java-11-openjdk-amd64/bin/java
-java16=/usr/lib/jvm/java-16-openjdk-amd64/bin/java
+java17=/usr/lib/jvm/java-17-openjdk-amd64/bin/java
 
 # Get Minecraft server software and version from first and second CLI options 
 cd $(echo $HOME)
@@ -54,7 +54,7 @@ if [[ $minor < 17 ]];
 then
 	javabin=$java8
 else
-	javabin=$java16
+	javabin=$java17
 fi
 
 # Get configured port for MC server and echo to console
