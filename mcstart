@@ -1,12 +1,7 @@
 #!/bin/bash 
 
-# Enable debugging
-#set -x
-#echo $PWD
+## Declare variables
 
-# Declare variables
-
-# Get OS info
 # Get OS info to determine package manager
 if [ -e /etc/os-release ]; then
   source /etc/os-release;
@@ -49,7 +44,7 @@ fi
 
 # Get Minecraft server software and version from first and second CLI options 
 cd "$HOME" || ( echo "Could not change to $HOME"; exit )
-#echo $PWD
+
 if [[ "$1" ]]; then
   mcSrvrType="$1" 
 fi
@@ -139,5 +134,5 @@ else
 	echo "Starting $mcSrvrType-$gameDir on Port: $srvrPort"
 	# screen -d -m -S "MCServer_$mcSrvrType-$gameDir" $javabin -Xms1G -Xmx4G -jar $mcSrvrType-$gameDir.jar nogui
   # Using tmux now. Starting with Rocky Linux 8 screen was dropped
-  tmux new-session -d -s "MCServer_${mcSrvrType}" -n "MCServer_${mcSrvrType}-${gameDir}" "$javabin" -Xms1G -Xmx4G -jar "${mcSrvrType}"-"${gameDir}".jar nogui
+  tmux new-session -d -s "MCServer_${mcSrvrType}" -n "MCServer_${mcSrvrType}-${gameDir}" java -Xms1G -Xmx4G -jar "${mcSrvrType}"-"${gameDir}".jar nogui
 fi
