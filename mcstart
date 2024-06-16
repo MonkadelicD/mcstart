@@ -30,12 +30,18 @@ fi
 # Set variable for each java version needed
 if [[ "$ID" == "ubuntu" ]] || [[ "$ID" == "debian" ]] || [[ "$ID" == "linuxmint" ]]; then
   java8=/usr/lib/jvm/java-8-openjdk-"$arch"/jre/bin/java
+  java8Home=/usr/lib/jvm/java-8-openjdk-"$arch"/jre
   java17=/usr/lib/jvm/java-17-openjdk-"$arch"/bin/java
+  java17Home=/usr/lib/jvm/java-17-openjdk-"$arch"
   java21=/usr/lib/jvm/java-21-openjdk-"$arch"/bin/java
+  java21Home=/usr/lib/jvm/java-21-openjdk-"$arch"
 elif [[ "$ID" == "fedora" ]] || [[ "$ID" == "rhel" ]] || [[ "$ID" == "rocky" ]]; then
   java8=/usr/lib/jvm/jre-1.8.0/bin/java
+  java8Home=/usr/lib/jvm/jre-1.8.0
   java17=/usr/lib/jvm/jre-17/bin/java
+  java17Home=/usr/lib/jvm/jre-17
   java21=/usr/lib/jvm/jre-21/bin/java
+  java21Home=/usr/lib/jvm/jre-21
 else
   echo "Untested OS. Please verify and improve this script."
   exit 1
@@ -44,35 +50,49 @@ fi
 # Get Minecraft server software and version from first and second CLI options 
 cd "$HOME" || ( echo "Could not change to $HOME"; exit )
 #echo $PWD
-mcSrvrType="$1" 
+if [[ "$1" ]]; then
+  mcSrvrType="$1" 
+fi
+if [[ "$2" ]]; then
+  versionString="$2"
+fi
+
+mcTypeVerString="$mcSrvrType"/"$versionString"
 
 # Check and set input variables if valid selections
-if [[ -e "$mcSrvrType"/"$2" && -d "$mcSrvrType"/"$2" ]];
+if [[ -e "$mcTypeVerString" && -d "$mcTypeVerString" ]];
 then
 	echo "Found $mcSrvrType-$2"
-	srvrDir="$HOME"/"$mcSrvrType"/"$2"
-	linkTarget=$(readlink -f "$1"/"$2")
-	buildVersion=$(basename "$linkTarget")
-	gameDir="$2"
+	srvrDir="$HOME"/"$mcTypeVerString"
+	linkTarget=$(readlink -f "$mcTypeVerString")
+	gameDir=$(basename "$linkTarget")
 elif ! "$1";
 then
-	echo "MC server type not valid at first option"
+	echo "Minecraft server type not valid or not installed."
 	help
 elif ! "$2";
 then
-	echo "MC server version not valid at second option"
+	echo "Minecraft server version entered not valid or not installed."
 	help
 fi
 
-# Get MC server minor version for java compatibilty
-IFS=. read major minor point <<< "$buildVersion"
-if [[ "$minor" -lt 17 ]];
-then
-	javabin="$java8"
-elif [[ "$minor" -ge 20 ]] && [[ "$point" -ge 4 ]]; then
-  javabin="$java21"
+# Get MC server version for java compatibilty
+IFS=- read mcVersion gameOpt <<< "$gameDir"
+IFS=. read major minor point <<< "$mcVersion"
+if [[ "$major" ]] && [[ "$minor" ]] && [[ "$point" ]]; then
+  if [[ "$minor" -lt 17 ]]; then
+    javabin="$java8"
+    JAVA_HOME="$java8Home"
+  elif [[ "$minor" -ge 20 ]] && [[ "$point" -ge 4 ]]; then
+    javabin="$java21"
+    JAVA_HOME="$java12Home"
+  else
+    javabin="$java17"
+    JAVA_HOME="$java17Home"
+  fi
 else
-	javabin="$java17"
+  echo "Version entered is not valid."
+  help
 fi
 
 # Get configured port for MC server and echo to console
@@ -109,14 +129,15 @@ cd "$srvrDir" || ( echo "Could not change to $srvrDir"; exit )
 # Java command to start MC server in a screen session. 
 if [[ "$mcSrvrType" == forge ]];
 then
-	echo "Starting ${mcSrvrType}-${buildVersion} on Port: $srvrPort"
-	# screen -d -m -S "MCServer_$mcSrvrType-$buildVersion" $srvrDir/run.sh
+  PATH="$JAVA_HOME"/bin:"$PATH"
+	echo "Starting ${mcSrvrType}-${gameDir} on Port: $srvrPort"
+	# screen -d -m -S "MCServer_$mcSrvrType-$gameDir" $srvrDir/run.sh
   # Using tmux now. Starting with Rocky Linux 8 screen was dropped
-  tmux new-session -d -s "MCServer_${mcSrvrType}" -n "MCServer_${mcSrvrType}-${buildVersion}" "$srvrDir"/run.sh
+  tmux new-session -d -s "MCServer_${mcSrvrType}" -n "MCServer_${mcSrvrType}-${gameDir}" "$srvrDir"/run.sh
 	
 else
-	echo "Starting $mcSrvrType-$buildVersion on Port: $srvrPort"
-	# screen -d -m -S "MCServer_$mcSrvrType-$buildVersion" $javabin -Xms1G -Xmx4G -jar $mcSrvrType-$buildVersion.jar nogui
+	echo "Starting $mcSrvrType-$gameDir on Port: $srvrPort"
+	# screen -d -m -S "MCServer_$mcSrvrType-$gameDir" $javabin -Xms1G -Xmx4G -jar $mcSrvrType-$gameDir.jar nogui
   # Using tmux now. Starting with Rocky Linux 8 screen was dropped
-  tmux new-session -d -s "MCServer_${mcSrvrType}" -n "MCServer_${mcSrvrType}-${buildVersion}" "$javabin" -Xms1G -Xmx4G -jar "${mcSrvrType}"-"${buildVersion}".jar nogui
+  tmux new-session -d -s "MCServer_${mcSrvrType}" -n "MCServer_${mcSrvrType}-${gameDir}" "$javabin" -Xms1G -Xmx4G -jar "${mcSrvrType}"-"${gameDir}".jar nogui
 fi
