@@ -15,7 +15,7 @@ else
   exit 1
 fi
 
-# get CPu architecture for java in Ubuntu
+# get CPU architecture for java in Ubuntu
 if [ "$(arch)" = aarch64 ]; then
   arch=arm64
 else
