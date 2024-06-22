@@ -34,24 +34,24 @@ by the server type and version like <server-name>-<MC-version>.jar
   
 The directory structure should resemble the following tree:  
 
-forge
-├── 1.17.1
-│   ├── forge-1.17.1-37.0.95-installer.jar
-│   └── run.sh
-├── 1.19.2
-│   ├── forge-1.19.2-43.2.0-installer.jar
-│   └── run.sh
-├── 1.19.3
-│   ├── forge-1.19.3-44.1.0-installer.jar
-│   └── run.sh
-└── current -> 1.19.3
+    forge
+    ├── 1.17.1
+    │   ├── forge-1.17.1-37.0.95-installer.jar
+    │   └── run.sh
+    ├── 1.19.2
+    │   ├── forge-1.19.2-43.2.0-installer.jar
+    │   └── run.sh
+    ├── 1.19.3
+    │   ├── forge-1.19.3-44.1.0-installer.jar
+    │   └── run.sh
+    └── current -> 1.19.3
 
-spigot
-├── 1.17.1
-│   └── spigot-1.17.1.jar
-├── 1.19.3
-│   └── spigot-1.19.3.jar
-└── current -> 1.19.3
+    spigot
+    ├── 1.17.1
+    │   └── spigot-1.17.1.jar
+    ├── 1.19.3
+    │   └── spigot-1.19.3.jar
+    └── current -> 1.19.3
 
 For Forge servers, run the java installer from within the directory
 corresponding to the Minecraft version.
