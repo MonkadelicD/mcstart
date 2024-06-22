@@ -14,13 +14,14 @@ Packages:
 - java (at least version 8, 17, and 21 according to my testing)
 
 # Directory Structure
-Place mcstart script in whatever directory you prefer that is included
-in your $PATH.  
-mcstart expects each minecraft server jar to be located in $HOME in a 
+- Place mcstart script in whatever directory you prefer that is included
+in your $PATH.
+- mcstart expects each minecraft server jar to be located in $HOME in a 
 directory named the same as the server software name, ie forge, paper,
-spigot, vanilla, pixelmon, fabric etc.  
-Within the server directory there should be a directory for each version
-of Minecraft, ie 1.12.2, 1.17.1, 1.19.2, 1.19.3, etc.  
+spigot, vanilla, pixelmon, fabric etc.
+- Within the server directory there should be a directory for each version
+of Minecraft, ie 1.12.2, 1.17.1, 1.19.2, 1.19.3, etc.
+  
 The script now supports adding a `-<suffix>` to a version name to allow
 multiple unique servers for a specific version. The suffix can be any
 string of characters except a hyphen "-". Example: 1.19.3-solo 
