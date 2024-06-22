@@ -38,14 +38,30 @@ The directory structure should resemble the following tree:
     forge
     ├── 1.17.1
     │   ├── forge-1.17.1-37.0.95-installer.jar
-    │   └── run.sh
+    │   ├── run.sh
     ├── 1.19.2
-    │   ├── forge-1.19.2-43.2.0-installer.jar
-    │   └── run.sh
+    │   ├── forge-1.19.2-43.3.0-installer.jar
+    │   ├── run.sh
+    ├── 1.19.2-solo
+    │   ├── forge-1.19.2-43.4.0-installer.jar
+    │   ├── run.sh
     ├── 1.19.3
     │   ├── forge-1.19.3-44.1.0-installer.jar
-    │   └── run.sh
-    └── current -> 1.19.3
+    │   ├── run.sh
+    ├── 1.20.1
+    │   ├── forge-1.20.1-47.2.0-installer.jar
+    │   ├── run.sh
+    ├── 1.20.6
+    │   ├── forge-1.20.6-50.1.3-installer.jar
+    │   ├── forge-1.20.6-50.1.3-shim.jar
+    │   ├── run.sh
+    ├── 1.20.6-beware
+    │   ├── forge-1.20.6-50.1.3-installer.jar
+    │   ├── forge-1.20.6-50.1.3-shim.jar
+    │   ├── run.sh
+    ├── beware -> 1.20.6-beware
+    ├── current -> 1.20.6
+    └── solo -> 1.19.2-solo
 
     spigot
     ├── 1.17.1
