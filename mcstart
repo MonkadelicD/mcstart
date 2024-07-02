@@ -74,11 +74,14 @@ fi
 # Get MC server version for java compatibilty
 IFS=- read mcVersion gameOpt <<< "$gameDir"
 IFS=. read major minor point <<< "$mcVersion"
-if [[ "$major" ]] && [[ "$minor" ]] && [[ "$point" ]]; then
+if [[ "$major" ]] && [[ "$minor" ]]; then
   if [[ "$minor" -lt 17 ]]; then
     javabin="$java8"
     JAVA_HOME="$java8Home"
-  elif [[ "$minor" -ge 20 ]] && [[ "$point" -ge 4 ]]; then
+  elif [[ "$minor" -eq 20 ]] && [[ "$point" -ge 4 ]]; then
+    javabin="$java21"
+    JAVA_HOME="$java12Home"
+  elif [[ "$minor" -ge 21 ]]; then
     javabin="$java21"
     JAVA_HOME="$java12Home"
   else
