@@ -125,17 +125,23 @@ cd "$srvrDir" || ( echo "Could not change to $srvrDir"; exit )
 #echo $PWD
 
 # Java command to start MC server in a screen session. 
-if [[ "$mcSrvrType" == forge ]];
-then
+if [[ "$mcSrvrType" == forge ]]; then
+
   PATH="$JAVA_HOME"/bin:"$PATH"
-	echo "Starting ${mcSrvrType}-${gameDir} on Port: $srvrPort"
-	# screen -d -m -S "MCServer_$mcSrvrType-$gameDir" $srvrDir/run.sh
-  # Using tmux now. Starting with Rocky Linux 8 screen was dropped
-  tmux new-session -d -s "MCServer_${mcSrvrType}" -n "MCServer_${mcSrvrType}-${gameDir}" "$srvrDir"/run.sh
+
+  if [[ "$minor" -lt 17 ]]; then
+   
+    echo "Starting ${mcSrvrType}-${gameDir} on Port: $srvrPort"
+    tmux new-session -d -s "MCServer_${mcSrvrType}" -n "MCServer_${mcSrvrType}-${gameDir}" java -Xms1G -Xmx4G -jar "${mcSrvrType}"-"${gameDir}".jar nogui
+  else
+    echo "Starting ${mcSrvrType}-${gameDir} on Port: $srvrPort"
+    tmux new-session -d -s "MCServer_${mcSrvrType}" -n "MCServer_${mcSrvrType}-${gameDir}" "$srvrDir"/run.sh
 	
 else
+
+  PATH="$JAVA_HOME"/bin:"$PATH"
+
 	echo "Starting $mcSrvrType-$gameDir on Port: $srvrPort"
-	# screen -d -m -S "MCServer_$mcSrvrType-$gameDir" $javabin -Xms1G -Xmx4G -jar $mcSrvrType-$gameDir.jar nogui
-  # Using tmux now. Starting with Rocky Linux 8 screen was dropped
   tmux new-session -d -s "MCServer_${mcSrvrType}" -n "MCServer_${mcSrvrType}-${gameDir}" java -Xms1G -Xmx4G -jar "${mcSrvrType}"-"${gameDir}".jar nogui
+
 fi
