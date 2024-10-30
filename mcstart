@@ -133,9 +133,13 @@ if [[ "$mcSrvrType" == forge ]]; then
    
     echo "Starting ${mcSrvrType}-${gameDir} on Port: $srvrPort"
     tmux new-session -d -s "MCServer_${mcSrvrType}" -n "MCServer_${mcSrvrType}-${gameDir}" java -Xms1G -Xmx4G -jar "${mcSrvrType}"-"${gameDir}".jar nogui
+
   else
+
     echo "Starting ${mcSrvrType}-${gameDir} on Port: $srvrPort"
     tmux new-session -d -s "MCServer_${mcSrvrType}" -n "MCServer_${mcSrvrType}-${gameDir}" "$srvrDir"/run.sh
+
+  fi
 	
 else
 
