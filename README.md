@@ -23,7 +23,7 @@ spigot, vanilla, pixelmon, fabric etc.
 of Minecraft, ie 1.12.2, 1.17.1, 1.19.2, 1.19.3, etc.
 - For Forge server the script will always use the run.sh script.
 - For Spigot, Paper, Fabric, and Vanilla the server jar should be named
-by the server type and version like <server-name>-<MC-version>.jar
+by the server type and version like /<server-name>-<MC-version\>.jar
 - The directory structure should resemble the following tree:
   
 The script now supports adding a `-<suffix>` to a version name to allow
