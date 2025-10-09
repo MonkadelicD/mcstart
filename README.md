@@ -81,4 +81,4 @@ To start your server use the following syntax:
     `mcstart <server-type> <version>`  
 
 Example:  
-    mcstart forge 1.19.3  
+    `mcstart forge 1.19.3`  
