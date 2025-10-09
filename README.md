@@ -74,11 +74,11 @@ Once the server is running use `tmux list-sessions` to list running tmux
 sessions. Then use `tmux attach-session -t <name-of-tmux-session>` to  
 connect to the server console.  
 
-The second option <version> is optional. The default is 'current' if no  
+The second argument \<version\> is optional. The default is 'current' if no  
 version option is entered.  
 
 To start your server use the following syntax:  
-    mcstart <server-type> <version>  
+    `mcstart <server-type> <version>`
 
 Example:  
     mcstart forge 1.19.3  
