@@ -1,151 +1,202 @@
-#!/bin/bash 
+#!/bin/bash
 
-## Declare variables
+## mcstart - Start Minecraft servers with automatic Java version detection.
+##
+## Usage: mcstart <server-type> [version]
+##
+## Exit codes:
+##   0  - Success
+##   1  - Untested or unsupported OS
+##   2  - Invalid server type or version
+##   3  - Failed to change directory
+##   4  - tmux is not available and could not be installed
 
-# Get OS info to determine package manager
-if [ -e /etc/os-release ]; then
-  source /etc/os-release;
-fi
-if [[ "$ID" == "ubuntu" ]] || [[ "$ID" == "debian" ]] || [[ "$ID" == "linuxmint" ]]; then
-  pkg_mngr="apt"
-elif [[ "$ID" == "fedora" ]] || [[ "$ID" == "rhel" ]] || [[ "$ID" == "rocky" ]]; then
-  pkg_mngr="dnf"
-else
-  echo "Untested OS. Please verify and improve this script."
-  exit 1
-fi
+set -euo pipefail
 
-# get CPU architecture for java in Ubuntu
-if [ "$(arch)" = aarch64 ]; then
-  arch=arm64
-else
-  arch=amd64
-fi
+## ---- Functions ----
 
-# Set variable for each java version needed
-if [[ "$ID" == "ubuntu" ]] || [[ "$ID" == "debian" ]] || [[ "$ID" == "linuxmint" ]]; then
-  java8=/usr/lib/jvm/java-8-openjdk-"$arch"/jre/bin/java
-  java8Home=/usr/lib/jvm/java-8-openjdk-"$arch"/jre
-  java17=/usr/lib/jvm/java-17-openjdk-"$arch"/bin/java
-  java17Home=/usr/lib/jvm/java-17-openjdk-"$arch"
-  java21=/usr/lib/jvm/java-21-openjdk-"$arch"/bin/java
-  java21Home=/usr/lib/jvm/java-21-openjdk-"$arch"
-elif [[ "$ID" == "fedora" ]] || [[ "$ID" == "rhel" ]] || [[ "$ID" == "rocky" ]]; then
-  java8=/usr/lib/jvm/jre-1.8.0/bin/java
-  java8Home=/usr/lib/jvm/jre-1.8.0
-  java17=/usr/lib/jvm/jre-17/bin/java
-  java17Home=/usr/lib/jvm/jre-17
-  java21=/usr/lib/jvm/jre-21/bin/java
-  java21Home=/usr/lib/jvm/jre-21
-else
-  echo "Untested OS. Please verify and improve this script."
-  exit 1
-fi
-
-# Get Minecraft server software and version from first and second CLI options 
-cd "$HOME" || ( echo "Could not change to $HOME"; exit )
-
-if [[ "$1" ]]; then
-  mcSrvrType="$1" 
-fi
-if [[ "$2" ]]; then
-  versionString="$2"
-fi
-
-mcTypeVerString="$mcSrvrType"/"$versionString"
-
-# Check and set input variables if valid selections
-if [[ -e "$mcTypeVerString" && -d "$mcTypeVerString" ]];
-then
-	echo "Found $mcSrvrType-$2"
-	srvrDir="$HOME"/"$mcTypeVerString"
-	linkTarget=$(readlink -f "$mcTypeVerString")
-	gameDir=$(basename "$linkTarget")
-elif ! "$1";
-then
-	echo "Minecraft server type not valid or not installed."
-	help
-elif ! "$2";
-then
-	echo "Minecraft server version entered not valid or not installed."
-	help
-fi
-
-# Get MC server version for java compatibilty
-IFS=- read mcVersion gameOpt <<< "$gameDir"
-IFS=. read major minor point <<< "$mcVersion"
-if [[ "$major" ]] && [[ "$minor" ]]; then
-  if [[ "$minor" -lt 17 ]]; then
-    javabin="$java8"
-    JAVA_HOME="$java8Home"
-  elif [[ "$minor" -eq 20 ]] && [[ "$point" -ge 4 ]]; then
-    javabin="$java21"
-    JAVA_HOME="$java12Home"
-  elif [[ "$minor" -ge 21 ]]; then
-    javabin="$java21"
-    JAVA_HOME="$java12Home"
-  else
-    javabin="$java17"
-    JAVA_HOME="$java17Home"
-  fi
-else
-  echo "Version entered is not valid."
-  help
-fi
-
-# Get configured port for MC server and echo to console
-srvrPort=$(grep "server-port" "$srvrDir"/server.properties | awk -F = '{ print $2 }')
-
-# Help/Usage
-
-help()
-{
-	# Display help/usage
-	echo "This script requires at least a server type to be specified."
-	echo "A build version can also be specified as the second option."
-	echo
-	echo "Syntax: startmc.sh [servertype] [version]"
-	echo
+# Display usage
+help() {
+  echo "Usage: mcstart <server-type> [version]"
+  echo
+  echo "Start a Minecraft server of the given type (forge, paper, etc.)"
+  echo "and optional version (default: 'current')."
+  echo
+  echo "Examples:"
+  echo "  mcstart forge 1.19.3"
+  echo "  mcstart paper"
+  echo "  mcstart forge 1.20.6-beware"
+  echo
+  echo "Exit codes:"
+  echo "  0  Success"
+  echo "  1  Untested / unsupported OS"
+  echo "  2  Invalid server type or version"
+  echo "  3  Failed to change directory"
+  echo "  4  tmux is not available"
 }
 
-# Main program
+# Package installers
+run_apt() {
+  sudo apt update && sudo apt install -y "$1"
+}
+run_dnf() {
+  sudo dnf install -y "$1"
+}
+run_yum() {
+  sudo yum install -y "$1"
+}
 
-# Ensure tmux is installed
-if [[ ! -x /usr/bin/tmux ]]; then
-  # install wtih apt or dnf
-  if [ "$pkg_mngr" == apt ]; then
-    run_apt tmux 
-  elif [ "$pkg_mngr" == dnf ]; then
-    run_dnf tmux
-  fi
+## ---- OS Detection ----
+
+# Determine package manager from /etc/os-release
+pkg_mngr=
+if [ -r /etc/os-release ]; then
+  # Only read the fields we need instead of sourcing the whole file
+  ID=$(grep -oP '^ID=\K.*' /etc/os-release 2>/dev/null || echo "")
+  # Strip quotes if present
+  ID=$(printf '%s' "$ID" | tr -d '"')
 fi
 
-# Change to directory selected version is located in. 
-cd "$srvrDir" || ( echo "Could not change to $srvrDir"; exit )
-#echo $PWD
+case "$ID" in
+  ubuntu|debian|linuxmint) pkg_mngr="apt"  ;;
+  fedora|rhel|rocky)       pkg_mngr="dnf"  ;;
+  centos)                  pkg_mngr="yum"  ;;
+esac
 
-# Java command to start MC server in a screen session. 
-if [[ "$mcSrvrType" == forge ]]; then
+if [ -z "$pkg_mngr" ]; then
+  echo "Untested or unsupported OS. Please verify and improve this script." >&2
+  exit 1
+fi
 
-  PATH="$JAVA_HOME"/bin:"$PATH"
+# CPU architecture for Java paths
+arch=$(uname -m)
+case "$arch" in
+  aarch64) arch=arm64  ;;
+  x86_64)  arch=amd64  ;;
+  *)       arch=amd64  ;;
+esac
 
-  if [[ "$minor" -lt 17 ]]; then
-   
-    echo "Starting ${mcSrvrType}-${gameDir} on Port: $srvrPort"
-    tmux new-session -d -s "MCServer_${mcSrvrType}" -n "MCServer_${mcSrvrType}-${gameDir}" java -Xms1G -Xmx4G -jar "${mcSrvrType}"-"${gameDir}".jar nogui
+## ---- Java Paths ----
 
-  else
+case "$ID" in
+  ubuntu|debian|linuxmint)
+    java8=/usr/lib/jvm/java-8-openjdk-"$arch"/jre/bin/java
+    java8Home=/usr/lib/jvm/java-8-openjdk-"$arch"/jre
+    java17=/usr/lib/jvm/java-17-openjdk-"$arch"/bin/java
+    java17Home=/usr/lib/jvm/java-17-openjdk-"$arch"
+    java21=/usr/lib/jvm/java-21-openjdk-"$arch"/bin/java
+    java21Home=/usr/lib/jvm/java-21-openjdk-"$arch"
+    ;;
+  fedora|rhel|rocky)
+    java8=/usr/lib/jvm/jre-1.8.0/bin/java
+    java8Home=/usr/lib/jvm/jre-1.8.0
+    java17=/usr/lib/jvm/jre-17/bin/java
+    java17Home=/usr/lib/jvm/jre-17
+    java21=/usr/lib/jvm/jre-21/bin/java
+    java21Home=/usr/lib/jvm/jre-21
+    ;;
+  *)
+    echo "Untested OS. Please verify and improve this script." >&2
+    exit 1
+    ;;
+esac
 
-    echo "Starting ${mcSrvrType}-${gameDir} on Port: $srvrPort"
-    tmux new-session -d -s "MCServer_${mcSrvrType}" -n "MCServer_${mcSrvrType}-${gameDir}" "$srvrDir"/run.sh
+## ---- Argument Parsing ----
 
-  fi
-	
+cd "$HOME" || { echo "Could not change to $HOME" >&2; exit 3; }
+
+mcSrvrType="${1:-}"
+versionString="${2:-current}"
+
+if [ -z "$mcSrvrType" ]; then
+  echo "Error: server type is required." >&2
+  help
+  exit 2
+fi
+
+serverDir="$HOME/$mcSrvrType/$versionString"
+
+# Follow symlinks (e.g., "current" -> "1.19.3")
+if [ -L "$serverDir" ]; then
+  linkTarget=$(readlink -f "$serverDir")
+  gameDir=$(basename "$linkTarget")
+elif [ -d "$serverDir" ]; then
+  gameDir="$versionString"
 else
-
-  PATH="$JAVA_HOME"/bin:"$PATH"
-
-	echo "Starting $mcSrvrType-$gameDir on Port: $srvrPort"
-  tmux new-session -d -s "MCServer_${mcSrvrType}" -n "MCServer_${mcSrvrType}-${gameDir}" java -Xms1G -Xmx4G -jar "${mcSrvrType}"-"${gameDir}".jar nogui
-
+  echo "Error: Could not find server directory: $serverDir" >&2
+  help
+  exit 2
 fi
+
+# Resolve the absolute path
+srvrAbsDir=$(readlink -f "$serverDir")
+
+# Parse MC version from directory name (strip optional -suffix)
+gameDirRaw=$(basename "$srvrAbsDir")
+mcVersion=$(printf '%s' "$gameDirRaw" | sed 's/^\([0-9.]*\).*/\1/')
+
+IFS=. read -r major minor point <<EOF
+$mcVersion
+EOF
+
+# Validate version
+if [ -z "$major" ] || [ -z "$minor" ]; then
+  echo "Error: Version '$mcVersion' could not be parsed from directory: $gameDirRaw" >&2
+  exit 2
+fi
+
+## ---- Java Version Selection ----
+
+if [ "$minor" -lt 17 ]; then
+  javabin="$java8"
+  JAVA_HOME="$java8Home"
+elif [ "$minor" -eq 20 ] && [ "${point:-0}" -ge 4 ]; then
+  javabin="$java21"
+  JAVA_HOME="$java21Home"
+elif [ "$minor" -ge 21 ]; then
+  javabin="$java21"
+  JAVA_HOME="$java21Home"
+else
+  javabin="$java17"
+  JAVA_HOME="$java17Home"
+fi
+
+## ---- Install tmux if Missing ----
+
+if ! command -v tmux >/dev/null 2>&1; then
+  echo "tmux not found. Installing..."
+  case "$pkg_mngr" in
+    apt) run_apt tmux   ;;
+    dnf) run_dnf tmux   ;;
+    yum) run_yum tmux   ;;
+  esac
+  if ! command -v tmux >/dev/null 2>&1; then
+    echo "Error: Failed to install tmux." >&2
+    exit 4
+  fi
+fi
+
+## ---- Read Server Port ----
+
+srvrPort=$(grep "server-port" "$srvrAbsDir/server.properties" 2>/dev/null | awk -F = '{ print $2 }')
+if [ -z "$srvrPort" ]; then
+  srvrPort="25565"
+fi
+
+## ---- Launch Server ----
+
+cd "$srvrAbsDir" || { echo "Could not change to $srvrAbsDir" >&2; exit 3; }
+
+export PATH="$JAVA_HOME/bin:$PATH"
+
+startCmd="java -Xms${MC_MEM_MIN:-1G} -Xmx${MC_MEM_MAX:-4G} -jar ${mcSrvrType}-${gameDirRaw}.jar nogui"
+
+# For Forge, use run.sh when available (MC >= 1.17)
+if [ "$mcSrvrType" = "forge" ] && [ -x ./run.sh ]; then
+  startCmd="./run.sh"
+fi
+
+echo "Starting $mcSrvrType-$gameDirRaw on Port: $srvrPort"
+tmux new-session -d -s "MCServer_${mcSrvrType}" \
+  -n "MCServer_${mcSrvrType}-${gameDirRaw}" \
+  $startCmd

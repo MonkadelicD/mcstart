@@ -1,84 +1,159 @@
-## README - mcstart
+# mcstart
 
-# Overview
-mcstart is a simple shell script used to start minecraft servers.  
-It supports a specific directory structure but works with a variety of  
-Minecraft server jars.  
-A secondary goal of the script is to be fully POSIX sh compliant. This  
-is to maintain as much universale compatibility as possible.  
+Simple shell script to start Minecraft servers with automatic Java version detection.
 
-# Requirements
-Packages:
-- Minecraft server application  
-- ~~screen~~ tmux  
-- java (at least version 8, 17, and 21 according to my testing)  
+## Requirements
 
-# Directory Structure
-- Place mcstart script in whatever directory you prefer that is included  
-in your $PATH.
-- mcstart expects each minecraft server jar to be located in $HOME in a  
-directory named the same as the server software name, ie forge, paper,  
-spigot, vanilla, pixelmon, fabric etc.  
-- Within the server directory there should be a directory for each version  
-of Minecraft, ie 1.12.2, 1.17.1, 1.19.2, 1.19.3, etc.  
-- For Forge server the script will always use the run.sh script.  
-- For Spigot, Paper, Fabric, and Vanilla the server jar should be named  
-by the server type and version like \<server-name\>-\<MC-version\>.jar  
-- The directory structure should resemble the following tree:  
-  
-The script now supports adding a `-<suffix>` to a version name to allow  
-multiple unique servers for a specific version. The suffix can be any  
-string of characters except a hyphen "-". Example: 1.19.3-solo  
-There should also be a directory titled 'current' that is linked to the  
-most recent version present.  
+- Minecraft server application (Forge, Paper, Spigot, Fabric, Vanilla, etc.)
+- tmux
+- Java 8, 17, and/or 21 (depending on server version)
 
-    forge
-    ├── 1.17.1
-    │   ├── forge-1.17.1-37.0.95-installer.jar
-    │   ├── run.sh
-    ├── 1.19.2
-    │   ├── forge-1.19.2-43.3.0-installer.jar
-    │   ├── run.sh
-    ├── 1.19.2-solo
-    │   ├── forge-1.19.2-43.4.0-installer.jar
-    │   ├── run.sh
-    ├── 1.19.3
-    │   ├── forge-1.19.3-44.1.0-installer.jar
-    │   ├── run.sh
-    ├── 1.20.1
-    │   ├── forge-1.20.1-47.2.0-installer.jar
-    │   ├── run.sh
-    ├── 1.20.6
-    │   ├── forge-1.20.6-50.1.3-installer.jar
-    │   ├── forge-1.20.6-50.1.3-shim.jar
-    │   ├── run.sh
-    ├── 1.20.6-beware
-    │   ├── forge-1.20.6-50.1.3-installer.jar
-    │   ├── forge-1.20.6-50.1.3-shim.jar
-    │   ├── run.sh
-    ├── beware -> 1.20.6-beware
-    ├── current -> 1.20.6
-    └── solo -> 1.19.2-solo
+## Directory Structure
 
-    spigot
-    ├── 1.17.1
-    │   └── spigot-1.17.1.jar
-    ├── 1.19.3
-    │   └── spigot-1.19.3.jar
-    └── current -> 1.19.3
+Place `mcstart` in a directory on your `$PATH` (e.g., `~/bin` or `/usr/local/bin`).
 
-For Forge servers, run the java installer from within the directory  
-corresponding to the Minecraft version.  
+mcstart expects each server type to have its own directory under `$HOME`,
+with a subdirectory for each Minecraft version:
 
-Once the server is running use `tmux list-sessions` to list running tmux  
-sessions. Then use `tmux attach-session -t <name-of-tmux-session>` to  
-connect to the server console.  
+```
+$HOME/
+├── forge/
+│   ├── 1.17.1/
+│   ├── 1.19.2/
+│   └── current -> 1.19.2
+├── paper/
+│   ├── 1.17.1/
+│   ├── 1.19.3/
+│   └── current -> 1.19.3
+├── spigot/
+│   └── ...
+└── fabric/
+    └── ...
+```
 
-The second argument \<version\> is optional. The default is 'current' if no  
-version option is entered.  
+### Symlinks
 
-To start your server use the following syntax:  
-    `mcstart <server-type> <version>`  
+A `current` symlink inside each server type directory points to the most
+recent version. If the version argument is omitted, `current` is the default.
 
-Example:  
-    `mcstart forge 1.19.3`  
+### Version Suffixes (Multiple Servers, Same Version)
+
+Append a `-suffix` to a version name to run multiple unique servers on the
+same Minecraft version. The suffix can be any string except those containing
+a hyphen.
+
+```
+forge/
+├── 1.20.6/
+├── 1.20.6-beware/
+├── 1.20.6-solo/
+├── current -> 1.20.6
+└── beware -> 1.20.6-beware
+```
+
+You can create additional symlinks (e.g., `beware -> 1.20.6-beware`) for
+convenient startup:
+
+```
+mcstart forge beware
+```
+
+### Server Jars
+
+- **Forge:** Run the installer jar from within the version directory, then the
+  script will use `run.sh` automatically.
+- **Spigot, Paper, Fabric, Vanilla:** Name the jar as
+  `<server-type>-<MC-version>.jar` (e.g., `paper-1.19.3.jar`).
+
+## Usage
+
+```
+mcstart <server-type> [version]
+```
+
+- `<server-type>` — directory name under `$HOME` (forge, paper, spigot, etc.)
+- `[version]` — version subdirectory or symlink name (default: `current`)
+
+### Examples
+
+```
+mcstart forge 1.19.3
+mcstart paper
+mcstart forge beware
+```
+
+### JVM Memory
+
+Override the default heap allocation with environment variables:
+
+```
+MC_MEM_MIN=2G MC_MEM_MAX=8G mcstart forge 1.19.3
+```
+
+Defaults are `1G` min and `4G` max if unset.
+
+### Console Access
+
+List running tmux sessions:
+
+```
+tmux list-sessions
+```
+
+Attach to a server console:
+
+```
+tmux attach-session -t MCServer_<server-type>
+```
+
+Detach from a tmux session with `Ctrl-B d`.
+
+## Java Version Detection
+
+The script automatically selects the appropriate Java version based on the
+Minecraft release:
+
+| MC Version       | Java Required |
+|------------------|---------------|
+| < 1.17           | Java 8        |
+| 1.17 – 1.20.3    | Java 17       |
+| ≥ 1.20.4         | Java 21       |
+
+If a server fails to start, confirm that the matching Java version is
+installed on your system.
+
+## Exit Codes
+
+| Code | Meaning                        |
+|------|--------------------------------|
+| 0    | Server started successfully    |
+| 1    | Untested or unsupported OS     |
+| 2    | Invalid server type or version |
+| 3    | Failed to change directory     |
+| 4    | tmux not available             |
+
+## Troubleshooting
+
+**"Could not find server directory"**
+  - Verify the directory exists: `ls ~/forge/1.19.3`
+  - Check the spelling matches the folder name exactly.
+
+**"Untested or unsupported OS"**
+  - mcstart supports Debian/Ubuntu, Fedora/RHEL/Rocky, and CentOS.
+  - For other distros, you can add detection in the `case "$ID"` block.
+
+**"Version could not be parsed"**
+  - Directory names should start with a valid MC version number:
+    `1.19.3`, `1.20.6-solo`, etc.
+
+**"Failed to install tmux"**
+  - Ensure `sudo` access is available or install tmux manually.
+
+**tmux: Error connecting to /tmp/tmux-1000/default (permission denied)**
+  - The tmux server runs under your user. If this persists, restart it:
+    `tmux kill-server && tmux new-session -d`
+
+**Server starts but immediately exits**
+  - Check `server.properties` for the correct `server-port` setting.
+  - Run the java command manually from the server directory to see the error.
+  - Confirm the correct Java version is installed (see table above).
