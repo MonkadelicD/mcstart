@@ -183,10 +183,23 @@ if ! command -v tmux >/dev/null 2>&1; then
 fi
 
 ## ---- Read Server Port ----
-
-srvrPort=$(grep "server-port" "$srvrAbsDir/server.properties" 2>/dev/null | awk -F = '{ print $2 }')
+if [ ! -f "$srvrAbsDir/server.properties" ]; then
+  echo "Error: Missing server.properties file: $srvrAbsDir/server.properties" >&2
+  echo "Assuming first run of $mcSrvrType-$gameDirRaw" >&2
+  echo "Initiating first launch to generate required files." >&2
+  echo "Ensure you edit server.properties as desired." >&2
+else
+  srvrPort=$(grep "server-port" "$srvrAbsDir/server.properties" 2>/dev/null | awk -F = '{ print $2 }')
+fi
 if [ -z "$srvrPort" ]; then
   srvrPort="25565"
+fi
+
+## ---- Accept EULA ----
+
+if [ ! -f "$srvrAbsDir/eula.txt" ]; then
+  touch "$srvrAbsDir/eula.txt"
+  echo "eula=true" >> "$srvrAbsDir/eula.txt"
 fi
 
 ## ---- Launch Server ----
