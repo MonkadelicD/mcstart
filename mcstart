@@ -161,6 +161,12 @@ else
   JAVA_HOME="$java17Home"
 fi
 
+if [ ! -x "$javabin" ]; then
+  echo "Error: Required Java not found at: $javabin" >&2
+  echo "       Install the matching OpenJDK package or correct the path in this script." >&2
+  exit 2
+fi
+
 ## ---- Install tmux if Missing ----
 
 if ! command -v tmux >/dev/null 2>&1; then
@@ -187,6 +193,7 @@ fi
 
 cd "$srvrAbsDir" || { echo "Could not change to $srvrAbsDir" >&2; exit 3; }
 
+export JAVA_HOME
 export PATH="$JAVA_HOME/bin:$PATH"
 
 startCmd="java -Xms${MC_MEM_MIN:-1G} -Xmx${MC_MEM_MAX:-4G} -jar ${mcSrvrType}-${gameDirRaw}.jar nogui"
@@ -197,6 +204,7 @@ if [ "$mcSrvrType" = "forge" ] && [ -x ./run.sh ]; then
 fi
 
 echo "Starting $mcSrvrType-$gameDirRaw on Port: $srvrPort"
+echo "Using Java: $("$javabin" -version 2>&1 | head -1)"
 tmux new-session -d -s "MCServer_${mcSrvrType}" \
   -n "MCServer_${mcSrvrType}-${gameDirRaw}" \
-  $startCmd
+  "$startCmd"
