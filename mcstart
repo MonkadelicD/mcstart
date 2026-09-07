@@ -183,6 +183,7 @@ if ! command -v tmux >/dev/null 2>&1; then
 fi
 
 ## ---- Read Server Port ----
+srvrPort=""
 if [ ! -f "$srvrAbsDir/server.properties" ]; then
   echo "Error: Missing server.properties file: $srvrAbsDir/server.properties" >&2
   echo "Assuming first run of $mcSrvrType-$gameDirRaw" >&2
