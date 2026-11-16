@@ -115,22 +115,16 @@ if [ -z "$mcSrvrType" ]; then
   exit 2
 fi
 
-serverDir="$HOME/mc-srvrs/$mcSrvrType/$versionString"
+serverDir="$HOME/$srvrRoot/$mcSrvrType/$versionString"
 
 # Follow symlinks (e.g., "current" -> "1.19.3")
-if [ -L "$serverDir" ]; then
-  linkTarget=$(readlink -f "$serverDir")
-  gameDir=$(basename "$linkTarget")
-elif [ -d "$serverDir" ]; then
-  gameDir="$versionString"
+if [ -L "$serverDir" ] || [ -d "$serverDir" ]; then
+  srvrAbsDir=$(readlink -f "$serverDir")
 else
   echo "Error: Could not find server directory: $serverDir" >&2
   help
   exit 2
 fi
-
-# Resolve the absolute path
-srvrAbsDir=$(readlink -f "$serverDir")
 
 # Parse MC version from directory name (strip optional -suffix)
 gameDirRaw=$(basename "$srvrAbsDir")
@@ -183,6 +177,14 @@ if ! command -v tmux >/dev/null 2>&1; then
   fi
 fi
 
+sessionName=$(printf 'MCServer_%s-%s' "$mcSrvrType" "$gameDirRaw" \
+  | tr -c '[:alnum:]_-' '_')
+
+if tmux has-session -t "=$sessionName" 2>/dev/null; then
+  echo "Error: Server session already exists: $sessionName" >&2
+  exit 2
+fi
+
 ## ---- Read Server Port ----
 srvrPort=""
 if [ ! -f "$srvrAbsDir/server.properties" ]; then
@@ -218,8 +220,8 @@ if [ "$mcSrvrType" = "forge" ] && [ -x ./run.sh ]; then
   startCmd="./run.sh"
 fi
 
-echo "Starting $mcSrvrType-$gameDirRaw on Port: $srvrPort"
+echo "Starting $sessionName on Port: $srvrPort"
 echo "Using Java: $("$javabin" -version 2>&1 | head -1)"
-tmux new-session -d -s "MCServer_${mcSrvrType}" \
-  -n "MCServer_${mcSrvrType}-${gameDirRaw}" \
+tmux new-session -d -s "$sessionName" \
+  -n "$sessionName" \
   "$startCmd"
