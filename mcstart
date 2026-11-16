@@ -105,6 +105,7 @@ esac
 
 cd "$HOME" || { echo "Could not change to $HOME" >&2; exit 3; }
 
+srvrRoot="mc-srvrs"
 mcSrvrType="${1:-}"
 versionString="${2:-current}"
 
@@ -114,7 +115,7 @@ if [ -z "$mcSrvrType" ]; then
   exit 2
 fi
 
-serverDir="$HOME/$mcSrvrType/$versionString"
+serverDir="$HOME/$mc_srvrs/$mcSrvrType/$versionString"
 
 # Follow symlinks (e.g., "current" -> "1.19.3")
 if [ -L "$serverDir" ]; then
