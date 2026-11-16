@@ -1,0 +1,21 @@
+services:
+  mcstart-test:
+    build:
+      context: .
+      args:
+        UID: 1000
+        GID: 1000
+    image: mcstart-test:26.04
+    init: true
+    environment:
+      HOME: /home/vitadmin
+      MCSTART_BIN: /home/vitadmin/git/mcstart/mcstart
+      MCSTART_SERVER_ROOT: /home/vitadmin/mc-srvrs
+      TMUX_TMP_DIR: /tmp/mcstart-tmux
+    user: 1000:1000
+    volumes:
+      - .:/home/vitadmin/git/mcstart:ro
+      - ${HOME}/Projects/minecraft/mc-srvrs:/home/vitadmin/mc-srvrs
+    working_dir: /home/vitadmin/git/mcstart
+    tty: true
+    command: ["./test-servers.sh", "quick"]

@@ -82,6 +82,51 @@ mcstart paper
 mcstart forge beware
 ```
 
+## Docker Test Environment
+
+The Docker image uses Ubuntu 26.04 and the same base and Java packages as the
+`minecraft-srv` Ansible role. Build it with:
+
+```
+docker build --build-arg UID="$(id -u)" --build-arg GID="$(id -g)" -t mcstart-test:26.04 .
+```
+
+Mount your local server tree and run either test mode:
+
+```
+docker run --rm -it \
+  -v "$HOME/Projects/minecraft/mc-srvrs:/home/vitadmin/mc-srvrs" \
+  mcstart-test:26.04 test-servers quick
+
+docker run --rm -it \
+  -v "$HOME/Projects/minecraft/mc-srvrs:/home/vitadmin/mc-srvrs" \
+  mcstart-test:26.04 test-servers full
+```
+
+Alternatively, use Docker Compose to mount the local repository and server tree:
+
+```
+docker compose build
+docker compose run --rm mcstart-test ./test-servers.sh preflight
+docker compose run --rm mcstart-test
+docker compose run --rm mcstart-test ./test-servers.sh full
+```
+
+The Compose service mounts the current repository read-only at
+`/home/vitadmin/git/mcstart` and the server tree at
+`/home/vitadmin/mc-srvrs`. Each `docker compose run` command uses a disposable
+container, so its tmux server does not affect or require teardown of the host
+tmux environment.
+
+The quick test starts one current world per family. The full test processes one
+family at a time, launches at most two sessions from that family, verifies the
+sessions, and stops only those two sessions before testing the next family.
+When a family spans multiple Java groups, the two launches use different Java
+groups; when it has only one Java group, they use two different versions.
+Sessions are named `MCServer_<server-type>-<world>`, with characters outside
+`[a-zA-Z0-9_-]` normalized to underscores. This allows multiple worlds from the
+same family to run concurrently without testing more than two at once.
+
 ### JVM Memory
 
 Override the default heap allocation with environment variables:
@@ -97,13 +142,13 @@ Defaults are `1G` min and `4G` max if unset.
 List running tmux sessions:
 
 ```
-tmux list-sessions
+tmux list-sessions | grep '^MCServer_'
 ```
 
 Attach to a server console:
 
 ```
-tmux attach-session -t MCServer_<server-type>
+tmux attach-session -t '=MCServer_<server-type>-<world>'
 ```
 
 Detach from a tmux session with `Ctrl-B d`.
