@@ -115,7 +115,7 @@ if [ -z "$mcSrvrType" ]; then
   exit 2
 fi
 
-serverDir="$HOME/$mc_srvrs/$mcSrvrType/$versionString"
+serverDir="$HOME/mc_srvrs/$mcSrvrType/$versionString"
 
 # Follow symlinks (e.g., "current" -> "1.19.3")
 if [ -L "$serverDir" ]; then
